@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<!-- viewport travado (sem zoom) porque é um jogo de toque: zoom acidental atrapalha -->
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Eco — Jogo de Memória Acessível</title>
+
+<!-- CSS em arquivo separado -->
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- 
+  .app é o container de tela inteira. Ele empilha 4 blocos na vertical
+  (header, toggles, status/botão, main) usando flexbox em coluna.
+  Ver style.css → .app
+-->
+<div class="app">
+
+  <!-- CABEÇALHO: nome do jogo + nível atual -->
+  <header>
+    <div class="brand">
+      <strong>Eco</strong>
+      <span>Memória por toque e vibração</span>
+    </div>
+    <!-- scoreEl é reescrito pelo JS a cada rodada (nextRound) -->
+    <div class="stat" id="scoreEl">
+      0
+      <small>Nível</small>
+    </div>
+  </header>
+
+  <!-- TOGGLES: ligam/desligam som e vibração. Ficam no topo de propósito,
+       pra quem usa leitor de tela achar rápido, sem descer a tela toda -->
+  <div class="toggles">
+    <label class="toggle"><input type="checkbox" id="soundToggle" checked> Som</label>
+    <label class="toggle"><input type="checkbox" id="vibToggle" checked> Vibração</label>
+  </div>
+
+  <!-- BOTÃO INICIAR: o JS troca o texto dele pra "Jogar de novo" após um erro -->
+  <button id="startBtn" type="button">▶ Iniciar jogo</button>
+
+  <!-- Aviso só aparece se o navegador não suportar Vibration API (ex: Safari/iOS) -->
+  <p id="vibWarning" class="vib-warning" hidden>
+    Este aparelho não tem vibração — o jogo vai usar som e cor no lugar.
+  </p>
+
+  <!-- Linha de status visível pra todo mundo (não é a mesma coisa que o
+       aria-live escondido lá embaixo — essa aqui é só visual) -->
+  <p id="status" role="status" aria-live="off">Toque em Iniciar jogo para começar.</p>
+
+  <!-- TABULEIRO: os dois lados que o jogador toca -->
+  <main>
+    <div class="side left" id="btnLeft" role="button" tabindex="0"
+         aria-label="Lado esquerdo, vermelho, vibração de pulso único">
+      <!-- .ring é o anel animado que "pulsa" quando o lado acende -->
+      <div class="ring" aria-hidden="true"><span></span></div>
+      <span class="label"><span class="glyph">●</span>Esquerda</span>
+    </div>
+    <div class="side right" id="btnRight" role="button" tabindex="0"
+         aria-label="Lado direito, azul, vibração de pulso duplo">
+      <!-- aqui tem DOIS spans dentro do ring, pra imitar visualmente o pulso duplo -->
+      <div class="ring" aria-hidden="true"><span></span><span class="two"></span></div>
+      <span class="label"><span class="glyph">●●</span>Direita</span>
+    </div>
+  </main>
+
+  <!--
+    Região invisível (classe sr-only) que só existe pra leitor de tela.
+    O JS muda o texto dela em announce(), e como tem aria-live="assertive",
+    o VoiceOver/TalkBack fala o texto sozinho, sem precisar de foco.
+  -->
+  <div id="live" class="sr-only" aria-live="assertive"></div>
+</div>
+
+<!-- JS em arquivo separado, carregado no fim do body -->
+<script src="script.js"></script>
+</body>
+</html>

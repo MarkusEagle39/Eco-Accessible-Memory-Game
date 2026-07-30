@@ -1,0 +1,229 @@
+/*
+  ============================================================
+  VARIÁVEIS DE COR (design tokens)
+  ------------------------------------------------------------
+  Centralizar as cores aqui em vez de espalhar hexadecimais
+  pelo CSS todo facilita trocar a paleta inteira depois —
+  por exemplo, se quiser testar cores com mais contraste para
+  daltonismo, é só mexer nessas 8 linhas.
+  ============================================================
+*/
+:root{
+  --bg:      #0B0E13;   /* fundo geral da página */
+  --ink:     #F3F1EA;   /* texto principal (quase branco) */
+  --ink-dim: #8B92A3;   /* texto secundário, mais apagado */
+  --red:     #E4432A;   /* lado esquerdo */
+  --red-lit: #FF6B4A;   /* lado esquerdo, quando "aceso" */
+  --blue:    #2E6FE0;   /* lado direito */
+  --blue-lit:#5B93FF;   /* lado direito, quando "aceso" */
+  --panel:   #10141C;   /* fundo do header/toggles (mais escuro que o resto) */
+  --line:    #232A38;   /* cor das bordas/divisórias sutis */
+  --ok:      #3FBF7F;   /* verde de acerto */
+  --err:     #E4432A;   /* vermelho de erro (reaproveita o --red) */
+}
+
+/*
+  ============================================================
+  RESET BÁSICO
+  ------------------------------------------------------------
+  box-sizing: border-box → padding/border não somam ao tamanho
+  do elemento, o que evita cálculo de layout maluco.
+  user-select: none → impede selecionar texto sem querer
+  durante os toques rápidos do jogo.
+  ============================================================
+*/
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent; /* tira o "flash" cinza do toque no mobile */
+}
+html,body{
+  margin:0; padding:0; height:100%;
+  background:var(--bg); color:var(--ink);
+  font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
+  overscroll-behavior:none;   /* impede o "puxar pra atualizar" do navegador mobile */
+  touch-action:manipulation;  /* tira o delay de 300ms que o mobile dá antes do clique */
+  -webkit-user-select:none; user-select:none;
+}
+
+/*
+  ============================================================
+  LAYOUT GERAL (.app)
+  ------------------------------------------------------------
+  Aqui está o pulo do gato do layout: .app é um flex-column que
+  ocupa 100dvh (dynamic viewport height — versão do 100vh que
+  não conta a barra de endereço do navegador mobile). Cada filho
+  direto (header, toggles, botão, main) vira uma "fatia" da tela.
+  ============================================================
+*/
+.app{
+  display:flex; flex-direction:column;
+  height:100dvh; width:100vw; overflow:hidden;
+}
+
+/* ---------- CABEÇALHO (topo) ---------- */
+header{
+  flex:0 0 auto; /* não cresce nem encolhe: fica do tamanho do conteúdo */
+  display:flex; align-items:center; justify-content:space-between;
+  gap:12px;
+  padding: max(14px, env(safe-area-inset-top)) 16px 14px; /* respeita o "notch" do celular */
+  background:var(--panel);
+  border-bottom:1px solid var(--line);
+  z-index: 5;
+}
+.brand{ display:flex; flex-direction:column; line-height:1.05; }
+.brand strong{ font-size:1.15rem; letter-spacing:.02em; font-weight:800; }
+.brand span{ font-size:.72rem; color:var(--ink-dim); letter-spacing:.08em; text-transform:uppercase; }
+
+/* placar de nível, canto direito do header */
+.stat{
+  font-variant-numeric: tabular-nums; /* números com largura fixa, não "pulam" ao trocar */
+  font-size:1.6rem; font-weight:800; color:var(--ink);
+  min-width:2.2ch; text-align:right;
+}
+.stat small{
+  display:block; font-size:.68rem; font-weight:600; color:var(--ink-dim);
+  letter-spacing:.1em; text-transform:uppercase;
+}
+
+/* ---------- FAIXA DE TOGGLES (som / vibração) ---------- */
+.toggles{
+  flex:0 0 auto;
+  display:flex; justify-content:center; gap:14px;
+  padding:10px 16px 12px;
+  background:var(--panel);
+  border-bottom:1px solid var(--line);
+  z-index:5;
+}
+.toggle{
+  display:flex; align-items:center; gap:8px;
+  font-size:.82rem; color:var(--ink-dim);
+  padding:8px 10px; border-radius:10px;
+}
+.toggle input{ width:18px; height:18px; } /* checkbox maior, mais fácil de tocar */
+
+/* ---------- BOTÃO INICIAR ---------- */
+#startBtn{
+  flex:0 0 auto;
+  margin:14px 16px 0;
+  padding:16px 20px;
+  border:none; border-radius:16px;
+  background: linear-gradient(180deg, #F3F1EA, #DDD9CE); /* claro, contrasta com o fundo escuro */
+  color:#0B0E13;
+  font-size:1.05rem; font-weight:800; letter-spacing:.02em;
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  z-index: 5;
+}
+#startBtn:active{ transform:scale(.98); } /* feedback visual de "afundar" ao tocar */
+
+/* :focus-visible só aparece na navegação por teclado/leitor de tela,
+   não em cada toque na tela — assim não polui o visual no celular */
+#startBtn:focus-visible, .side:focus-visible{
+  outline:3px solid var(--ink); outline-offset:3px;
+}
+#startBtn[disabled]{ opacity:.5; }
+
+/* ---------- LINHA DE STATUS (texto "Sua vez", "Errou" etc) ---------- */
+#status{
+  flex:0 0 auto;
+  text-align:center; padding:10px 16px 2px;
+  font-size:.92rem; color:var(--ink-dim); min-height:1.4em;
+  z-index:5;
+}
+/* essas classes são adicionadas via JS (setStatus) pra colorir a mensagem */
+#status.err{ color:var(--err); font-weight:700; }
+#status.ok{ color:var(--ok); font-weight:700; }
+
+/*
+  ============================================================
+  TABULEIRO DO JOGO (main + .side)
+  ------------------------------------------------------------
+  main é flex-direction:row (padrão), então os dois .side ficam
+  lado a lado, cada um ocupando 50% da largura (flex:1 1 50%).
+  Isso que faz a divisão vertical da tela em esquerda/direita.
+  ============================================================
+*/
+main{
+  flex:1 1 auto; /* ocupa todo o espaço que sobrar na tela */
+  display:flex; flex-direction:row;
+  min-height:0; /* sem isso, o flex-item não encolhe corretamente no Safari */
+}
+
+.side{
+  flex:1 1 50%;
+  display:flex; align-items:flex-end; justify-content:center;
+  padding-bottom: max(28px, env(safe-area-inset-bottom));
+  position:relative; /* necessário pra .ring (position:absolute) se posicionar dentro dele */
+  font-size:1.4rem; font-weight:800; letter-spacing:.04em;
+  color:rgba(255,255,255,.92);
+  transition: filter .08s ease, transform .08s ease;
+}
+.side .label{ display:flex; flex-direction:column; align-items:center; gap:6px; }
+.side .glyph{
+  width:46px; height:46px; border-radius:50%;
+  border:3px solid rgba(255,255,255,.75);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.3rem;
+}
+
+/* cor normal de cada lado */
+.side.left{ background:var(--red); }
+.side.right{ background:var(--blue); border-left:2px solid rgba(0,0,0,.25); }
+
+/* classe .lit é adicionada/removida via JS (lightUp) durante a animação */
+.side.lit.left{ background:var(--red-lit); }
+.side.lit.right{ background:var(--blue-lit); }
+.side.lit{ transform:scale(0.985); } /* leve "afundada" enquanto pisca */
+
+/* classe .disabled é ligada enquanto a sequência está tocando,
+   pra deixar visualmente claro que não é a vez do jogador */
+.side.disabled{ filter:grayscale(.5) brightness(.55); }
+
+/*
+  ANEL DE PULSO
+  ------------------------------------------------------------
+  Ideia: o esquerdo tem 1 <span>, o direito tem 2 <span class="two">.
+  Isso faz o anel do lado direito "pulsar" duas vezes, espelhando
+  visualmente o padrão de vibração de pulso duplo — útil pra quem
+  tem baixa visão e ainda consegue perceber o ritmo na tela.
+*/
+.ring{
+  position:absolute; inset:0; pointer-events:none;
+  display:flex; align-items:center; justify-content:center;
+}
+.ring span{
+  position:absolute;
+  width:40px; height:40px; border-radius:50%;
+  border:3px solid rgba(255,255,255,.9);
+  opacity:0;
+}
+/* prefers-reduced-motion: respeita quem pediu ao sistema pra reduzir animações */
+@media (prefers-reduced-motion: no-preference){
+  .side.lit .ring span{ animation: pulseRing .5s ease-out; }
+  .side.lit .ring span.two{ animation-delay:.16s; } /* atraso = o "segundo pulso" */
+}
+@keyframes pulseRing{
+  0%   { transform:scale(.3); opacity:.9; }
+  100% { transform:scale(4.2); opacity:0; }
+}
+
+/*
+  ============================================================
+  CLASSE UTILITÁRIA: esconder visualmente mas manter acessível
+  ------------------------------------------------------------
+  Isso é o padrão "sr-only" (screen-reader only). O elemento
+  continua no DOM e é lido por leitores de tela, mas não ocupa
+  espaço nem aparece na tela. Usado na região aria-live (#live).
+  display:none NÃO funcionaria aqui, pois esconderia também do
+  leitor de tela.
+  ============================================================
+*/
+.sr-only{
+  position:absolute; width:1px; height:1px;
+  padding:0; margin:-1px; overflow:hidden;
+  clip:rect(0,0,0,0); white-space:nowrap; border:0;
+}
+
+.vib-warning{
+  font-size:.72rem; color:var(--ink-dim); text-align:center;
+  padding:0 16px 8px; z-index:5;
+}
