@@ -1,5 +1,7 @@
 # Eco — Jogo de Memória Acessível
 
+Demo: http://MarkusEagle39.github.io/Eco-Accessible-Memory-Game
+
 Jogo no estilo Simon/Genius, feito para pessoas com deficiência visual. Em vez de depender de cores, o jogo usa **vibração** e **som** como principais canais de feedback — a cor fica como reforço extra pra quem tem baixa visão.
 
 ## Como jogar
