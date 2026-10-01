@@ -1,0 +1,13 @@
+{
+  "name": "Eco — Memória acessível",
+  "short_name": "Eco Memória",
+  "description": "Jogo da memória acessível com sons, vibração e suporte a leitor de tela.",
+  "lang": "pt-BR",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#10231c",
+  "theme_color": "#10231c",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
